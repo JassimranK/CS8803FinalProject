@@ -1,4 +1,4 @@
-# You want to make sure your version produces better error rates than this :)
+﻿# You want to make sure your version produces better error rates than this :)
 
 import sys
 from math import *
@@ -18,14 +18,25 @@ tolerance_orientation = 0.25 # Tolerance for orientation.
 
 # --------
 # 
-# the "world" has 4 landmarks.
 # the robot's initial coordinates are somewhere in the square
 # represented by the landmarks.
 #
 # NOTE: Landmark coordinates are given in (y, x) form and NOT
 # in the traditional (x, y) format!
 
-landmarks  = [[0.0, 100.0], [0.0, 0.0], [100.0, 0.0], [100.0, 100.0]] # position of 4 landmarks in (y, x) format.
+landmarks  = [[105.0, 240.0], 
+              [974.0, 240.0], 
+              [974.0, 1696.0], 
+              [105.0, 1696.0], 
+              [540.0, 968.0], 
+              [974.0, 725.0], 
+              [105.0, 725.0], 
+              [974.0, 1211.0], 
+              [105.0, 1211.0], 
+              [540.0, 240.0], 
+              [540.0, 1696.0]] 
+# position of the landmarks in (y, x) format.
+
 world_size = 100.0 # world is NOT cyclic. Robot is allowed to travel "out of bounds"
 
 # ------------------------------------------------
@@ -57,7 +68,8 @@ class robot:
     def set(self, new_x, new_y, new_orientation):
 
         if new_orientation < 0 or new_orientation >= 2 * pi:
-            raise ValueError, 'Orientation must be in [0..2pi]'
+            #NON3.4CODE raise ValueError, 'Orientation must be in [0..2pi]'
+            raise ValueError('Orientation must be in [0..2pi]')
         self.x = float(new_x)
         self.y = float(new_y)
         self.orientation = float(new_orientation)
@@ -107,7 +119,8 @@ class robot:
     def move(self, motion):
         
         if motion[1] < 0.0: 
-            raise ValueError, 'Moving backward not allowed'
+            #NON3.4CODE raise ValueError, 'Moving backward not allowed'
+            raise ValueError('Moving backward not allowed')
         
         result = robot()
         result.length = self.length
@@ -199,13 +212,19 @@ def print_measurements(Z):
 
     T = len(Z)
 
-    print 'measurements = [[%.8s, %.8s, %.8s, %.8s],' % \
-        (str(Z[0][0]), str(Z[0][1]), str(Z[0][2]), str(Z[0][3]))
+    #NON3.4CODE print 'measurements = [[%.8s, %.8s, %.8s, %.8s],' % \
+    ##NON3.4CODE     (str(Z[0][0]), str(Z[0][1]), str(Z[0][2]), str(Z[0][3]))
+    print('measurements = [[%.8s, %.8s, %.8s, %.8s],' % \
+        (str(Z[0][0]), str(Z[0][1]), str(Z[0][2]), str(Z[0][3])))
     for t in range(1,T-1):
-        print '                [%.8s, %.8s, %.8s, %.8s],' % \
-            (str(Z[t][0]), str(Z[t][1]), str(Z[t][2]), str(Z[t][3]))
-    print '                [%.8s, %.8s, %.8s, %.8s]]' % \
-        (str(Z[T-1][0]), str(Z[T-1][1]), str(Z[T-1][2]), str(Z[T-1][3]))
+        #NON3.4CODE print '                [%.8s, %.8s, %.8s, %.8s],' % \
+        #NON3.4CODE     (str(Z[t][0]), str(Z[t][1]), str(Z[t][2]), str(Z[t][3]))
+    #NON3.4CODE print '                [%.8s, %.8s, %.8s, %.8s]]' % \
+        #NON3.4CODE (str(Z[T-1][0]), str(Z[T-1][1]), str(Z[T-1][2]), str(Z[T-1][3]))
+        print('                [%.8s, %.8s, %.8s, %.8s],' % \
+            (str(Z[t][0]), str(Z[t][1]), str(Z[t][2]), str(Z[t][3])))
+        print('                [%.8s, %.8s, %.8s, %.8s]]' % \
+            (str(Z[T-1][0]), str(Z[T-1][1]), str(Z[T-1][2]), str(Z[T-1][3])))
 
 # --------
 #
@@ -318,9 +337,12 @@ final_robot = x[0]
 measurements = x[1]
 estimated_position = particle_filter(motions, measurements)
 print_measurements(measurements)
-print 'Ground truth:    ', final_robot
-print 'Particle filter: ', estimated_position
-print 'Code check:      ', check_output(final_robot, estimated_position)
+#NON3.4CODE print 'Ground truth:    ', final_robot
+#NON3.4CODE print 'Particle filter: ', estimated_position
+#NON3.4CODE print 'Code check:      ', check_output(final_robot, estimated_position)
+print('Ground truth:    ', final_robot)
+print('Particle filter: ', estimated_position)
+print('Code check:      ', check_output(final_robot, estimated_position))
 
 
 

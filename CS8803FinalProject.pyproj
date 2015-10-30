@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{baa1ae27-e2c4-4fbc-955c-43b2fb6a803b}</ProjectGuid>
+    <ProjectHome />
+    <StartupFile>finalproject.py</StartupFile>
+    <SearchPath />
+    <WorkingDirectory>.</WorkingDirectory>
+    <OutputPath>.</OutputPath>
+    <ProjectTypeGuids>{888888a0-9f3d-457c-b088-3a5042f75d52}</ProjectTypeGuids>
+    <LaunchProvider>Standard Python launcher</LaunchProvider>
+    <InterpreterId />
+    <InterpreterVersion />
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
+  <PropertyGroup>
+    <VisualStudioVersion Condition=" '$(VisualStudioVersion)' == '' ">10.0</VisualStudioVersion>
+    <PtvsTargetsFile>$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets</PtvsTargetsFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="inputs\test01.txt" />
+    <Content Include="inputs\test02.txt" />
+    <Content Include="inputs\test03.txt" />
+    <Content Include="inputs\test04.txt" />
+    <Content Include="inputs\test05.txt" />
+    <Content Include="inputs\test06.txt" />
+    <Content Include="inputs\test07.txt" />
+    <Content Include="inputs\test08.txt" />
+    <Content Include="inputs\test09.txt" />
+    <Content Include="inputs\test10.txt" />
+    <Content Include="members.txt" />
+    <Content Include="readme.txt" />
+    <Content Include="tempfiles\TrainingDataLandmarkAnalysis.xlsx" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="finalproject.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="inputs" />
+    <Folder Include="tempfiles\" />
+  </ItemGroup>
+  <Import Project="$(PtvsTargetsFile)" Condition="Exists($(PtvsTargetsFile))" />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" Condition="!Exists($(PtvsTargetsFile))" />
+</Project>
