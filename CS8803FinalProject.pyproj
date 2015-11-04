@@ -21,6 +21,7 @@
     <PtvsTargetsFile>$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets</PtvsTargetsFile>
   </PropertyGroup>
   <ItemGroup>
+    <Content Include="inputs\test00.txt" />
     <Content Include="inputs\test01.txt" />
     <Content Include="inputs\test02.txt" />
     <Content Include="inputs\test03.txt" />
@@ -37,6 +38,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="finalproject.py" />
+    <Compile Include="matrix.py">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="inputs" />
