@@ -1,354 +1,79 @@
-﻿# You want to make sure your version produces better error rates than this :)
-
-import sys
+﻿import sys
 from math import *
 import random
+from matrix import *
 
-# --------
-# 
-# some top level parameters
-#
-bearing_noise = 0.1 # Noise parameter: should be included in sense function.
-steering_noise = 0.1 # Noise parameter: should be included in move function.
-distance_noise = 5.0 # Noise parameter: should be included in move function.
+def measurement_update(P, x, z):
+    y = matrix([[z]]) - H * x
+    S = H * P * matrix.transpose(H) + R
+    K = P * matrix.transpose(H) * matrix.inverse(S)
+    x = x + (K * y)
+    P = (I - K * H) * P
+    return P, x
 
-tolerance_xy = 15.0 # Tolerance for localization in the x and y directions.
-tolerance_orientation = 0.25 # Tolerance for orientation.
+def kalman_filter(x, P):
 
+    lastPrediction = 0
 
-# --------
-# 
-# the robot's initial coordinates are somewhere in the square
-# represented by the landmarks.
-#
-# NOTE: Landmark coordinates are given in (y, x) form and NOT
-# in the traditional (x, y) format!
-
-landmarks  = [[105.0, 240.0], 
-              [974.0, 240.0], 
-              [974.0, 1696.0], 
-              [105.0, 1696.0], 
-              [540.0, 968.0], 
-              [974.0, 725.0], 
-              [105.0, 725.0], 
-              [974.0, 1211.0], 
-              [105.0, 1211.0], 
-              [540.0, 240.0], 
-              [540.0, 1696.0]] 
-# position of the landmarks in (y, x) format.
-
-world_size = 100.0 # world is NOT cyclic. Robot is allowed to travel "out of bounds"
-
-# ------------------------------------------------
-# 
-# this is the robot class
-#
-
-class robot:
-
-    # --------
-    # init: 
-    #    creates robot and initializes location/orientation 
-    #
-
-    def __init__(self, length = 20.0):
-        self.x = random.random() * world_size # initial x position
-        self.y = random.random() * world_size # initial y position
-        self.orientation = random.random() * 2.0 * pi # initial orientation
-        self.length = length # length of robot
-        self.bearing_noise  = 0.0 # initialize bearing noise to zero
-        self.steering_noise = 0.0 # initialize steering noise to zero
-        self.distance_noise = 0.0 # initialize distance noise to zero
-
-    # --------
-    # set: 
-    #    sets a robot coordinate
-    #
-
-    def set(self, new_x, new_y, new_orientation):
-
-        if new_orientation < 0 or new_orientation >= 2 * pi:
-            #NON3.4CODE raise ValueError, 'Orientation must be in [0..2pi]'
-            raise ValueError('Orientation must be in [0..2pi]')
-        self.x = float(new_x)
-        self.y = float(new_y)
-        self.orientation = float(new_orientation)
-
-    # --------
-    # set_noise: 
-    #    sets the noise parameters
-    #
-    def set_noise(self, new_b_noise, new_s_noise, new_d_noise):
-        # makes it possible to change the noise parameters
-        # this is often useful in particle filters
-        self.bearing_noise  = float(new_b_noise)
-        self.steering_noise = float(new_s_noise)
-        self.distance_noise = float(new_d_noise)
-
-    # --------
-    # measurement_prob
-    #    computes the probability of a measurement
-    #  
-
-    def measurement_prob(self, measurements):
-
-        # calculate the correct measurement
-        predicted_measurements = self.sense(0) # Our sense function took 0 as an argument to switch off noise.
-
-
-        # compute errors
-        error = 1.0
-        for i in range(len(measurements)):
-            error_bearing = abs(measurements[i] - predicted_measurements[i])
-            error_bearing = (error_bearing + pi) % (2.0 * pi) - pi # truncate
-            
-
-            # update Gaussian
-            error *= (exp(- (error_bearing ** 2) / (self.bearing_noise ** 2) / 2.0) /  
-                      sqrt(2.0 * pi * (self.bearing_noise ** 2)))
-
-        return error
-    
-    def __repr__(self): #allows us to print robot attributes.
-        return '[x=%.6s y=%.6s orient=%.6s]' % (str(self.x), str(self.y), 
-                                                str(self.orientation))
-      
-    # --------
-    # move: 
-    #   
-    def move(self, motion):
+    for n in range(len(measurements)):
         
-        if motion[1] < 0.0: 
-            #NON3.4CODE raise ValueError, 'Moving backward not allowed'
-            raise ValueError('Moving backward not allowed')
-        
-        result = robot()
-        result.length = self.length
-        result.bearing_noise = self.bearing_noise
-        result.distance_noise = self.distance_noise
-        result.steering_noise = self.steering_noise
-        # Add noise       
-        alpha = random.gauss(motion[0], self.steering_noise)
-        d=  random.gauss(motion[1], self.distance_noise)
-        beta = d/self.length * tan(alpha)
-        if beta == 0:
-            X = self.x + d*cos(self.orientation)
-            Y = self.y + d*sin(self.orientation)
-            Theta = self.orientation
-        else:
-            r = d/beta
-            cx = self.x - sin(self.orientation) * r
-            cy = self.y + cos(self.orientation) * r
-            X = cx + sin(self.orientation + beta) * r
-            Y = cy - cos(self.orientation + beta) * r
-            Theta = (self.orientation + beta) % (2 * pi)
-        
-        result.x = X
-        result.y = Y
-        result.orientation = Theta
-        
-        return result
-		
-    # --------
-    # sense: 
-    def sense(self,flag = 1): #do not change the name of this function
-        Z = []
-
-        for lm in landmarks:
-            theta = (atan2(lm[0]- self.y, lm[1] - self.x) - self.orientation)% (2*pi)
-            theta = theta + random.gauss(0.0, self.bearing_noise)
-            Z.append(theta)
-
-        return Z
-
-
-# --------
-#
-# extract position from a particle set
-# 
-
-def get_position(p):
-    x = 0.0
-    y = 0.0
-    orientation = 0.0
-    for i in range(len(p)):
-        x += p[i].x
-        y += p[i].y
-        # orientation is tricky because it is cyclic. By normalizing
-        # around the first particle we are somewhat more robust to
-        # the 0=2pi problem
-        orientation += (((p[i].orientation - p[0].orientation + pi) % (2.0 * pi)) 
-                        + p[0].orientation - pi)
-    return [x / len(p), y / len(p), orientation / len(p)]
-
-# --------
-#
-# The following code generates the measurements vector
-# You can use it to develop your solution.
-# 
-
-
-def generate_ground_truth(motions):
-
-    myrobot = robot()
-    myrobot.set_noise(bearing_noise, steering_noise, distance_noise)
-
-    Z = []
-    T = len(motions)
-
-    for t in range(T):
-        myrobot = myrobot.move(motions[t])
-        Z.append(myrobot.sense())
-    #print 'Robot:    ', myrobot
-    return [myrobot, Z]
-
-# --------
-#
-# The following code prints the measurements associated
-# with generate_ground_truth
-#
-
-def print_measurements(Z):
-
-    T = len(Z)
-
-    #NON3.4CODE print 'measurements = [[%.8s, %.8s, %.8s, %.8s],' % \
-    ##NON3.4CODE     (str(Z[0][0]), str(Z[0][1]), str(Z[0][2]), str(Z[0][3]))
-    print('measurements = [[%.8s, %.8s, %.8s, %.8s],' % \
-        (str(Z[0][0]), str(Z[0][1]), str(Z[0][2]), str(Z[0][3])))
-    for t in range(1,T-1):
-        #NON3.4CODE print '                [%.8s, %.8s, %.8s, %.8s],' % \
-        #NON3.4CODE     (str(Z[t][0]), str(Z[t][1]), str(Z[t][2]), str(Z[t][3]))
-    #NON3.4CODE print '                [%.8s, %.8s, %.8s, %.8s]]' % \
-        #NON3.4CODE (str(Z[T-1][0]), str(Z[T-1][1]), str(Z[T-1][2]), str(Z[T-1][3]))
-        print('                [%.8s, %.8s, %.8s, %.8s],' % \
-            (str(Z[t][0]), str(Z[t][1]), str(Z[t][2]), str(Z[t][3])))
-        print('                [%.8s, %.8s, %.8s, %.8s]]' % \
-            (str(Z[T-1][0]), str(Z[T-1][1]), str(Z[T-1][2]), str(Z[T-1][3])))
-
-# --------
-#
-# The following code checks to see if your particle filter
-# localizes the robot to within the desired tolerances
-# of the true position. The tolerances are defined at the top.
-#
-
-def check_output(final_robot, estimated_position):
-
-    error_x = abs(final_robot.x - estimated_position[0])
-    error_y = abs(final_robot.y - estimated_position[1])
-    error_orientation = abs(final_robot.orientation - estimated_position[2])
-    error_orientation = (error_orientation + pi) % (2.0 * pi) - pi
-    correct = error_x < tolerance_xy and error_y < tolerance_xy \
-              and error_orientation < tolerance_orientation
-    return correct
-
-
-
-def particle_filter(motions, measurements, N=500): # I know it's tempting, but don't change N!
-    # --------
-    #
-    # Make particles
-    # 
-
-    p = []
-    for i in range(N):
-        r = robot()
-        r.set_noise(bearing_noise, steering_noise, distance_noise)
-        p.append(r)
-
-    # --------
-    #
-    # Update particles
-    #     
-
-    for t in range(len(motions)):
-    
-        # motion update (prediction)
-        p2 = []
-        for i in range(N):
-            p2.append(p[i].move(motions[t]))
-        p = p2
+        #TODO Update the filter to support calculating both X and Y and update this line as needed
+        z = measurements[n][0]
 
         # measurement update
-        w = []
-        for i in range(N):
-            w.append(p[i].measurement_prob(measurements[t]))
+        P, x = measurement_update(P, x, z)
 
-        # resampling
-        p3 = []
-        index = int(random.random() * N)
-        beta = 0.0
-        mw = max(w)
-        for i in range(N):
-            beta += random.random() * 2.0 * mw
-            while beta > w[index]:
-                beta -= w[index]
-                index = (index + 1) % N
-            p3.append(p[index])
-        p = p3
+        # prediction
+        x = F * x + u
+        P = F * P * matrix.transpose(F)
+
+        lastPrediction = x.value[0][0]
     
-    return get_position(p)
+    for i in range(60):
+        z = lastPrediction
 
-## IMPORTANT: You may uncomment the test cases below to test your code.
-## But when you submit this code, your test cases MUST be commented
-## out.
-##
-## You can test whether your particle filter works using the
-## function check_output (see test case 2). We will be using a similar
-## function. Note: Even for a well-implemented particle filter this
-## function occasionally returns False. This is because a particle
-## filter is a randomized algorithm. We will be testing your code
-## multiple times. Make sure check_output returns True at least 80%
-## of the time.
+        # measurement update
+        P, x = measurement_update(P, x, z)
+
+        # prediction
+        x = F * x + u
+        P = F * P * matrix.transpose(F)
+
+        #TODO Update to store the last Y prediction as well.
+        lastPrediction = x.value[0][0]
+        #TODO This should be changed to append the real Y value.   Right now it is set to duplicate the X value until the filter supports more dimensions
+        predictions.append([x.value[0][0], x.value[0][0]])
 
 
- 
-## --------
-## TEST CASES:
-## 
-##1) Calling the particle_filter function with the following
-##    motions and measurements should return a [x,y,orientation]
-##    vector near [x=93.476 y=75.186 orient=5.2664], that is, the
-##    robot's true location.
-##
-##motions = [[2. * pi / 10, 20.] for row in range(8)]
-##measurements = [[4.746936, 3.859782, 3.045217, 2.045506],
-##                [3.510067, 2.916300, 2.146394, 1.598332],
-##                [2.972469, 2.407489, 1.588474, 1.611094],
-##                [1.906178, 1.193329, 0.619356, 0.807930],
-##                [1.352825, 0.662233, 0.144927, 0.799090],
-##                [0.856150, 0.214590, 5.651497, 1.062401],
-##                [0.194460, 5.660382, 4.761072, 2.471682],
-##               [5.717342, 4.736780, 3.909599, 2.342536]]
+    return x,P
 
-##print particle_filter(motions, measurements)
-
-## 2) You can generate your own test cases by generating
-##    measurements using the generate_ground_truth function.
-##    It will print the robot's last location when calling it.
-##
-##
-number_of_iterations = 6
-motions = [[2. * pi / 20, 12.] for row in range(number_of_iterations)]
-##
-x = generate_ground_truth(motions)
-final_robot = x[0]
-measurements = x[1]
-estimated_position = particle_filter(motions, measurements)
-print_measurements(measurements)
-#NON3.4CODE print 'Ground truth:    ', final_robot
-#NON3.4CODE print 'Particle filter: ', estimated_position
-#NON3.4CODE print 'Code check:      ', check_output(final_robot, estimated_position)
-print('Ground truth:    ', final_robot)
-print('Particle filter: ', estimated_position)
-print('Code check:      ', check_output(final_robot, estimated_position))
+x = matrix([[0.], [0.]]) # initial state (location and velocity)
+P = matrix([[1000., 0.], [0., 1000.]]) # initial uncertainty
+u = matrix([[0.], [0.]]) # external motion
+F = matrix([[1., 1.], [0, 1.]]) # next state function
+H = matrix([[1., 0.]]) # measurement function
+R = matrix([[1.]]) # measurement uncertainty
+I = matrix([[1., 0.], [0., 1.]]) # identity matrix
 
 
 
-filename = sys.argv[1]
-x, y = open(filename, 'r').readlines()[-1].split(',')
+#filename = sys.argv[1]
+filename = "inputs/test00.txt"
+linesOfFile = open(filename, 'r').readlines()
+measurements = []
+predictions = []
+
+for line in linesOfFile:
+    xValue, yValue = line.rstrip('\n').split(',')
+    measurements.append([float(xValue), float(yValue)])
+    pass
+
+print(kalman_filter(x, P))
 
 with open('prediction.txt', 'w') as f:
-    for _ in range(60):
-        print >> f, '%s,%s' % (x.strip(), y.strip())
+    for prediction in predictions:
+        print('%s,%s' % (prediction[0], prediction[1]), end="\n", file=f)
+    #for prediction in predictions:
+    #    print >> f, '%s,%s' % (prediction[0], prediction[1])
+    #for _ in range(60):
+    #    print >> f, '%s,%s' % (x.strip(), y.strip())
