@@ -72,8 +72,8 @@ print(kalman_filter(x, P))
 
 with open('prediction.txt', 'w') as f:
     for prediction in predictions:
-        print('%s,%s' % (prediction[0], prediction[1]), end="\n", file=f)
+        print >> f, '%s,%s' % (prediction[0], prediction[1])
     #for prediction in predictions:
-    #    print >> f, '%s,%s' % (prediction[0], prediction[1])
+        #print('%s,%s' % (prediction[0], prediction[1]), end="\n", file=f)
     #for _ in range(60):
     #    print >> f, '%s,%s' % (x.strip(), y.strip())
