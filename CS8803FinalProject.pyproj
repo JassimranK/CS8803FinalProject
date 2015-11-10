@@ -34,6 +34,7 @@
     <Content Include="inputs\test10.txt" />
     <Content Include="members.txt" />
     <Content Include="readme.txt" />
+    <Content Include="requirements.txt" />
     <Content Include="tempfiles\TrainingDataLandmarkAnalysis.xlsx" />
   </ItemGroup>
   <ItemGroup>
