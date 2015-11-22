@@ -2,10 +2,7 @@
 from math import *
 import random
 from matrix import *
-from filterpy.kalman import KalmanFilter
 import numpy as np
-from filterpy.common import Q_discrete_white_noise
-from scipy.linalg import block_diag
 
 
 def measurement_update(P, x, z):
@@ -32,10 +29,11 @@ def kalman_filter(x, P):
         P, x = measurement_update(P, x, z)
 
         # prediction
-        x = F * x + u
-        P = F * P * matrix.transpose(F)
+        x = F * x + u        
+        P = F * P * matrix.transpose(F) 
+		
 
-        lastPrediction = [x.value[0][0], x.value[2][0]]
+        lastPrediction = [x.value[0][0], x.value[1][0]]
     
     for i in range(60):
         z = lastPrediction
@@ -45,28 +43,40 @@ def kalman_filter(x, P):
 
         # prediction
         x = F * x + u
-        P = F * P * matrix.transpose(F)
+        Q = matrix([[1/4.0*dt**4 , 1/4.0*dt**4, 1/2.0*dt**3, 1/2.0*dt**3, 1/2.0*dt**2, 1/2.0*dt**2], 
+		       [1/4.0*dt**4 , 1/4.0*dt**4, 1/2.0*dt**3, 1/2.0*dt**3, 1/2.0*dt**2, 1/2.0*dt**2],
+               [1/2.0*dt**3 , 1/2.0*dt**3, dt**2, dt**2, dt, dt],
+			   [1/2.0*dt**3 , 1/2.0*dt**3, dt**2, dt**2, dt, dt],
+			   [1/2.0*dt**2 , 1/2.0*dt**2, dt, dt, 1.0, 1.0],
+               [1/2.0*dt**2 , 1/2.0*dt**2, dt, dt, 1.0, 1.0]])
+        
+        P = F * P * matrix.transpose(F) 
 
         #TODO Update to store the last Y prediction as well.
-        lastPrediction = [x.value[0][0], x.value[2][0]]
+        lastPrediction = [x.value[0][0], x.value[1][0]]
         #TODO This should be changed to append the real Y value.  Right now it
         #is set to duplicate the X value until the filter supports more
         #dimensions
-        predictions.append([x.value[0][0], x.value[2][0]])
+        predictions.append([x.value[0][0], x.value[1][0]])
 
 
     return x,P
+	
+dt = 1.0/30 	#30 frames per second
 
-x = matrix([[0.], [0.], [0.], [0.]]) # initial state (location and velocity)
-P = matrix([[1000., 0., 0., 0.], [0., 1000., 0., 0.], [0., 0., 1000., 0.], [0., 0., 0., 1000.]]) # initial uncertainty
-u = matrix([[0.], [0.], [0.], [0.]]) # external motion
-F = matrix([[1., 1., 0., 0.], [0., 1., 0., 0.], [0., 0., 1., 1.], [0, 0., 0., 1.]]) # next state function
-H = matrix([[1., 0., 0., 0.], [0., 0., 1., 0.]]) # measurement function
-R = matrix([[1., 0.], [0., 1.]]) # measurement uncertainty
-I = matrix([[1., 0., 0., 0.], [0., 1., 0., 0.], [0., 0., 1., 0.], [0., 0., 0., 1.]]) # identity matrix
+x = matrix([[0.], [0.], [0.], [0.], [0.], [0.]]) # initial state (location and velocity)
+P = matrix([[1000., 0., 0., 0., 0. ,0.], [0., 1000., 0., 0., 0. ,0.], [0., 0., 1000., 0., 0. ,0.], [0., 0., 0., 1000., 0. ,0.], [0., 0., 0., 0., 1000., 0.], [0., 0., 0., 0., 0., 1000.]]) # initial uncertainty 1000 for both position and velocity and acc
+u = matrix([[0.], [0.], [0.], [0.], [0.], [0.]]) # external motion
+F = matrix([[1., 0., dt, 0., 1/2 * dt**2, 0.], [0., 1., 0., dt, 0., 1/2 * dt**2], [0., 0., 1., 0., dt, 0.], [0, 0., 0., 1., 0., dt], [0., 0., 0., 0., 1., 0.], [0., 0., 0., 0., 0., 1.]]) # next state function
+H = matrix([[1., 0., 0., 0., 0., 0.], [0., 1., 0., 0., 0., 0.]]) # measurement function
+ # measurement uncertainty
+ #TODO: try 1.0
+R = matrix([[1.0, 0.], [0., 1.0]])
+# identity matrix
+I = matrix([[1., 0., 0., 0., 0., 0.], [0., 1., 0., 0., 0., 0.], [0., 0., 1., 0., 0., 0.], [0., 0., 0., 1., 0., 0.], [0., 0., 0., 0., 1., 0.], [0., 0., 0., 0., 0., 1.]]) 
 
-##filename = sys.argv[1]
-filename = "inputs/test00.txt"
+filename = sys.argv[1]
+#filename = "inputs/test001.txt"
 linesOfFile = open(filename, 'r').readlines()
 measurements = []
 predictions = []
@@ -78,7 +88,9 @@ for line in linesOfFile:
 
 
 
-print(kalman_filter(x, P))
+x_p, P_p = (kalman_filter(x, P))
+x_p.show()
+
 
 #f = KalmanFilter(dim_x=4, dim_z=2)
 #dt = 1. / 30 #30 frames per second
@@ -190,6 +202,7 @@ print(kalman_filter(x, P))
 ##f.update(z)
 
 ##do_something_with_estimate (f.x)
+
 with open('prediction.txt', 'w') as f:
     for prediction in predictions:
         print >> f, '%s,%s' % (prediction[0], prediction[1])
