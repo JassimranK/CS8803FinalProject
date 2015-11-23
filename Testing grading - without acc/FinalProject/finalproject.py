@@ -2,25 +2,25 @@
 from math import *
 import random
 from matrix import *
-import numpy as np
+#import numpy as np
+def collision_detection(x0, y0):
+    dist_top = abs(0.0102 * x0 + y0 - 953.72) / (sqrt(0.0102 ** 2 + 1 ** 2))
+    dist_bot = abs(0.0102 * x0 + y0 - 145) / (sqrt(0.0102 ** 2 + 1 ** 2))
+    dist_left = abs(801 * x0 - 7 * y0 - 220835) / (sqrt(801 ** 2 + 7 ** 2))
+    dist_right = abs(10 * x0 - 1363 * y0 + 197699) / (sqrt(10 ** 2 + 1363 ** 2))
+    retval = False
+    if dist_top < 10 or dist_bot < 10 or dist_left < 10 or dist_right < 10:
+        retval = True
+    return retval
+        #TODO: If it happend in last 60: 1) turn 180 2) or calculate angle
 
-def collision_detection( x0, y0):
-	dist_top = abs(0.0102 * x0 + y0 - 953.72)/ (sqrt(0.0102 **2 + 1**2))
-	
-	dist_bot = abs(0.0102 * x0 + y0 - 145)/ (sqrt(0.0102 **2 + 1**2))
-	dist_left = abs(801 * x0 - 7*y0 - 220835)/ (sqrt(801 **2 + 7**2))
-	dist_right = abs(10 * x0 -1363* y0 + 197699)/ (sqrt(10 **2 + 1363**2))
-	if dist_top < 40 or dist_bot < 40 or dist_left < 40 or dist_right < 40 :
-        #reset: 
-		print "Icollsion"
-		x = matrix([[0.], [0.], [0.], [0.], [0.], [0.]]) # initial state (location and velocity)
-		P = matrix([[1000., 0., 0., 0., 0. ,0.], [0., 1000., 0., 0., 0. ,0.], [0., 0., 1000., 0., 0. ,0.], [0., 0., 0., 1000., 0. ,0.], [0., 0., 0., 0., 1000., 0.], [0., 0., 0., 0., 0., 1000.]]) # initial 
-		#TODO: If it happend in last 60: 1) turn 180 2) or calculate angle
-		
 def measurement_update(P, x, z):
-    collision_detection(z[0], z[1])
+    if collision_detection(z[0], z[1]):
+        x = matrix([[0.], [0.], [0.], [0.]]) # initial state (location and velocity)
+        P = matrix([[10., 0., 0., 0.], [0., 10., 0., 0.], [0., 0., 500., 0.], [0., 0., 0., 500.]]) # initial
+    
     Hx = H * x
-    zMatrix  = matrix([[z[0]], [z[1]]])
+    zMatrix = matrix([[z[0]], [z[1]]])
     y = zMatrix - Hx
     S = H * P * matrix.transpose(H) + R
     K = P * matrix.transpose(H) * matrix.inverse(S)
@@ -67,16 +67,18 @@ def kalman_filter(x, P):
 
     return x,P
 
+global x 
 x = matrix([[0.], [0.], [0.], [0.]]) # initial state (location and velocity)
-P = matrix([[10., 0., 0., 0.], [0., 10., 0., 0.], [0., 0., 1000., 0.], [0., 0., 0., 1000.]]) # initial uncertainty
+global P 
+P = matrix([[10., 0., 0., 0.], [0., 10., 0., 0.], [0., 0., 500., 0.], [0., 0., 0., 500.]]) # initial uncertainty
 u = matrix([[0.], [0.], [0.], [0.]]) # external motion
 F = matrix([[1., 1., 0., 0.], [0., 1., 0., 0.], [0., 0., 1., 1.], [0, 0., 0., 1.]]) # next state function
 H = matrix([[1., 0., 0., 0.], [0., 0., 1., 0.]]) # measurement function
 R = matrix([[1., 0.], [0., 1.]]) # measurement uncertainty
 I = matrix([[1., 0., 0., 0.], [0., 1., 0., 0.], [0., 0., 1., 0.], [0., 0., 0., 1.]]) # identity matrix
 
-filename = sys.argv[1]
-#filename = "inputs/test00.txt"
+#filename = sys.argv[1]
+filename = "inputs/test00.txt"
 linesOfFile = open(filename, 'r').readlines()
 measurements = []
 predictions = []
@@ -85,7 +87,6 @@ for line in linesOfFile:
     xValue, yValue = line.rstrip('\n').split(',')
     measurements.append([float(xValue), float(yValue)])
 #    pass
-
 
 
 print(kalman_filter(x, P))
