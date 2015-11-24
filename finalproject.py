@@ -13,12 +13,11 @@ def collision_detection(x0, y0):
         retval = True
     return retval
         #TODO: If it happend in last 60: 1) turn 180 2) or calculate angle
-
 def measurement_update(P, x, z):
     if collision_detection(z[0], z[1]):
         x = matrix([[0.], [0.], [0.], [0.]])
         P = matrix([[10., 0., 0., 0.], [0., 10., 0., 0.], [0., 0., 500., 0.], [0., 0., 0., 500.]])
-		
+
     Hx = H * x
     zMatrix = matrix([[z[0]], [z[1]]])
     y = zMatrix - Hx
@@ -28,55 +27,42 @@ def measurement_update(P, x, z):
     P = (I - K * H) * P
     return P, x
 
+def predict(P, x):
+    #Since the KF only works with linear problems, we can turn it into a simple
+    #linear problem by only looking back at recent measurments / predictions
+    for measurement in measurements[-lookBackFrames:]:
+
+        # measurement update
+        P, x = measurement_update(P, x, measurement)
+
+        # prediction
+        x = F * x + u
+        P = F * P * matrix.transpose(F)
+
+    lastPrediction = [x.value[0][0], x.value[1][0]]
+    return lastPrediction
+    
 def kalman_filter(x, P):
 
-    lastPrediction = None
-
-    for n in range(len(measurements)):
-        
-        #TODO Update the filter to support calculating both X and Y and update
-        #this line as needed
-        z = measurements[n]
-
-        # measurement update
-        P, x = measurement_update(P, x, z)
-
-        # prediction
-        x = F * x + u
-        P = F * P * matrix.transpose(F)
-
-        lastPrediction = [x.value[0][0], x.value[1][0]]
-    
     for i in range(60):
-        z = lastPrediction
+        x = matrix([[0.], [0.], [0.], [0.]])
+        P = matrix([[10., 0., 0., 0.], [0., 10., 0., 0.], [0., 0., 500., 0.], [0., 0., 0., 500.]])
+        lastPrediction = predict(P, x)
+        measurements.append(lastPrediction)
+        predictions.append(lastPrediction)
 
-        # measurement update
-        P, x = measurement_update(P, x, z)
+    return predictions
 
-        # prediction
-        x = F * x + u
-        P = F * P * matrix.transpose(F)
-
-        #TODO Update to store the last Y prediction as well.
-        lastPrediction = [x.value[0][0], x.value[1][0]]
-        #TODO This should be changed to append the real Y value.  Right now it
-        #is set to duplicate the X value until the filter supports more
-        #dimensions
-        predictions.append([x.value[0][0], x.value[1][0]])
-
-
-    return x,P
-	
-dt = 1.0/30 	#30 frames per second
+dt = 1.0 / 30 	#30 frames per second
 global x 
 x = matrix([[0.], [0.], [0.], [0.]]) # initial state (location and velocity)
 global P 
 #x = matrix([[0.], [0.], [0.], [0.]]) # initial state (location and velocity)
-P = matrix([[10., 0., 0., 0.], [0., 10., 0., 0.], [0., 0., 500., 0.], [0., 0., 0., 500.]]) # 
+P = matrix([[10., 0., 0., 0.], [0., 10., 0., 0.], [0., 0., 500., 0.], [0., 0., 0., 500.]]) #
 u = matrix([[0.], [0.], [0.], [0.]]) # external motion
 F = matrix([[1., 0., dt, 0.], [0., 1., 0., dt], [0., 0., 1., 0.], [0, 0., 0., 1.]]) # next state function
 H = matrix([[1., 0., 0., 0.], [0., 1., 0., 0.]]) # measurement function
- # measurement uncertainty
+                                                 # measurement uncertainty
  #TODO: try 1.0
 R = matrix([[1.0, 0.], [0., 1.0]])
 # identity matrix
@@ -85,6 +71,10 @@ I = matrix([[1., 0., 0., 0.], [0., 1., 0., 0.], [0., 0., 1., 0.], [0., 0., 0., 1
 
 filename = sys.argv[1]
 #filename = "inputs/test00.txt"
+#lookBackFrames = sys.argv[2]
+lookBackFrames = 10
+
+
 linesOfFile = open(filename, 'r').readlines()
 measurements = []
 predictions = []
