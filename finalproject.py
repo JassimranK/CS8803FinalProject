@@ -79,7 +79,7 @@ def predict(P, x):
         collResult = collision_detection(z[0], z[1])
         if collResult != "NONE":
             x = matrix([[measurement[0]], [measurement[1]], [x.value[2][0]], [x.value[3][0]]])
-            P = matrix([[10., 0., 0., 0.], [0., 10., 0., 0.], [0., 0., 1., 0.], [0., 0., 0., 1.]])
+            P = matrix([[1., 0., 0., 0.], [0., 1., 0., 0.], [0., 0., 10., 0.], [0., 0., 0., 10.]])
             avgDist = ComputeAvgDistance(measurements)
             if collResult == "TOP":
                 z = [measurement[0], measurement[1] - avgDist]
