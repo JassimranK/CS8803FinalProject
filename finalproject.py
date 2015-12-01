@@ -1,8 +1,6 @@
 ﻿import sys
 from math import *
-import random
 from matrix import *
-import numpy as np
 import pylab as pl
 
 # collision_detection is a function used to determine which side of the box the robot has hit
