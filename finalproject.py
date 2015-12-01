@@ -8,20 +8,24 @@ import pylab as pl
 def collision_detection(x0, y0):
     dist_top = abs(0.0102 * x0 + y0 - 953.72) / (sqrt(0.0102 ** 2 + 1 ** 2))
     dist_bot = abs(0.0102 * x0 + y0 - 145) / (sqrt(0.0102 ** 2 + 1 ** 2))
-    dist_left = abs(801 * x0 - 7 * y0 - 220835) / (sqrt(801 ** 2 + 7 ** 2))
-    dist_right = abs(10 * x0 - 1363 * y0 + 197699) / (sqrt(10 ** 2 + 1363 ** 2))
+    #dist_left = abs(10 * x0 - 1363 * y0 + 197699) / (sqrt(10 ** 2 + 1363 **
+    #2))
+    #dist_right = abs(801 * x0 - 7 * y0 - 220835) / (sqrt(801 ** 2 + 7 ** 2))
     retval = "NONE"
     if dist_top < 10 or y0 > 974:
         retval = "TOP"
     if dist_bot < 10 or y0 < 105:
         retval = "BOTTOM"
-    if  dist_left < 10 or x0 < 240:
+    #if dist_left < 10 or x0 < 240:
+    #    retval = "LEFT"
+    #if dist_right < 10 or x0 > 1696:
+    #    retval = "RIGHT"
+    if x0 < 240:
         retval = "LEFT"
-    if dist_right < 10 or x0 > 1696:
+    if x0 > 1696:
         retval = "RIGHT"
     return retval
         #TODO: If it happend in last 60: 1) turn 180 2) or calculate angle
-
 def ComputeAvgDistance(measurements):
     totalDistance = 0.
     numberOfMeasurements = len(measurements[-lookBackFrames:])
@@ -130,7 +134,7 @@ R = matrix([[1.0, 0.], [0., 1.0]])
 I = matrix([[1., 0., 0., 0.], [0., 1., 0., 0.], [0., 0., 1., 0.], [0., 0., 0., 1.]])
 
 #filename = sys.argv[1]
-filename = "inputs/test05.txt"
+filename = "inputs/test04.txt"
 linesOfFile = open(filename, 'r').readlines()
 lookBackFrames = 4
 measurements = []
@@ -143,7 +147,6 @@ for line in linesOfFile:
     mB.append([float(xValue)])
     nB.append(float(yValue))
 #    pass
-
 print(kalman_filter(x, P))
 pl.title('Plot prediction')
 pl.plot(mB,nB, 'b')
@@ -166,7 +169,7 @@ with open('prediction.txt', 'w') as f:
 
 pl.plot(m,n, 'r')
 
-filename = "actual/05.txt"
+filename = "actual/04.txt"
 linesOfFileA = open(filename, 'r').readlines()
 
 for line in linesOfFileA:
