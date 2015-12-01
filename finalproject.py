@@ -10,16 +10,33 @@ def collision_detection(x0, y0):
     dist_bot = abs(0.0102 * x0 + y0 - 145) / (sqrt(0.0102 ** 2 + 1 ** 2))
     dist_left = abs(801 * x0 - 7 * y0 - 220835) / (sqrt(801 ** 2 + 7 ** 2))
     dist_right = abs(10 * x0 - 1363 * y0 + 197699) / (sqrt(10 ** 2 + 1363 ** 2))
-    retval = False
-    if dist_top < 20 or dist_bot < 20 or dist_left < 20 or dist_right < 20:
-        retval = True
+    retval = "NONE"
+    if dist_top < 10 or y0 > 974:
+        retval = "TOP"
+    if dist_bot < 10 or y0 < 105:
+        retval = "BOTTOM"
+    if  dist_left < 10 or x0 < 240:
+        retval = "LEFT"
+    if dist_right < 10 or x0 > 1696:
+        retval = "RIGHT"
     return retval
         #TODO: If it happend in last 60: 1) turn 180 2) or calculate angle
-def measurement_update(P, x, z):
-    if collision_detection(z[0], z[1]):
-        x = matrix([[z[0]], [z[1]], [0.], [0.]])
-        P = matrix([[10., 0., 0., 0.], [0., 10., 0., 0.], [0., 0., 500., 0.], [0., 0., 0., 500.]])
 
+def ComputeAvgDistance(measurements):
+    totalDistance = 0.
+    numberOfMeasurements = len(measurements[-lookBackFrames:])
+    for i in range(numberOfMeasurements):
+        totalDistance += distanceBetween(measurements[i], measurements[i - 1])
+    return totalDistance / numberOfMeasurements
+
+
+def distanceBetween(point1, point2):
+   """Computes distance between point1 and point2. Points are (x, y) pairs."""
+   x1, y1 = point1
+   x2, y2 = point2
+   return sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+
+def measurement_update(P, x, z):
         ##################
         # prediction
     #x = (F * x) + u
@@ -55,8 +72,29 @@ def predict(P, x):
             x = matrix([[measurement[0]], [measurement[1]], [0.], [0.]])
             P = matrix([[10., 0., 0., 0.], [0., 10., 0., 0.], [0., 0., 500., 0.], [0., 0., 0., 500.]])
         
+
+        ##################################################
+        z = measurement
+
+        collResult = collision_detection(z[0], z[1])
+        if collResult != "NONE":
+            x = matrix([[measurement[0]], [measurement[1]], [x.value[2][0]], [x.value[3][0]]])
+            P = matrix([[10., 0., 0., 0.], [0., 10., 0., 0.], [0., 0., 1., 0.], [0., 0., 0., 1.]])
+            avgDist = ComputeAvgDistance(measurements)
+            if collResult == "TOP":
+                z = [measurement[0], measurement[1] - avgDist]
+            if collResult == "BOTTOM":
+                z = [measurement[0], measurement[1] + avgDist]
+            if collResult == "LEFT":
+                z = [measurement[0] + avgDist, measurement[1]]
+            if collResult == "RIGHT":
+                z = [measurement[0] - avgDist, measurement[1]]
+
+        ##################################################
+
+
         # measurement update
-        P, x = measurement_update(P, x, measurement)
+        P, x = measurement_update(P, x, z)
     
         # prediction
         x = F * x + u
