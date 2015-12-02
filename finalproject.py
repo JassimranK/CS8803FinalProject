@@ -132,9 +132,7 @@ R = matrix([[1.0, 0.], [0., 1.0]])
 # identity matrix
 I = matrix([[1., 0., 0., 0.], [0., 1., 0., 0.], [0., 0., 1., 0.], [0., 0., 0., 1.]])
 
-#filename = sys.argv[1]
-################################### TODO: Before turning in uncomment above and remove below #####################################################
-filename = "inputs/test04.txt"
+filename = sys.argv[1]
 
 # open and read the lines of the input file
 linesOfFile = open(filename, 'r').readlines()
@@ -145,52 +143,16 @@ measurements = []
 # contains only our predictions of the robot's location
 predictions = []
 
-###### BEGIN REMOVE - ONLY USED FOR PLOTTING THE CHARTS #######
-mB = []
-nB = []
-###### END REMOVE - ONLY USED FOR PLOTTING THE CHARTS #######
 
 for line in linesOfFile:
     xValue, yValue = line.rstrip('\n').split(',')
     measurements.append([float(xValue), float(yValue)])
-    ###### BEGIN REMOVE - ONLY USED FOR PLOTTING THE CHARTS #######
-    mB.append([float(xValue)])
-    nB.append(float(yValue))
-    ###### END REMOVE - ONLY USED FOR PLOTTING THE CHARTS #######
-
+    
 # call the KF
 print(kalman_filter(x, P))
-
-###### BEGIN REMOVE - ONLY USED FOR PLOTTING THE CHARTS #######
-pl.title('Plot prediction')
-pl.plot(mB,nB, 'b')
-#pl.xlim(0.0, 1800)
-#pl.ylim(0.0, 1000)
-m = []
-n = []
-mA = []
-nA = []
-###### END REMOVE - ONLY USED FOR PLOTTING THE CHARTS #######
 
 # write the predictions to a file
 with open('prediction.txt', 'w') as f:
     print 'length of predictions', len(predictions)
     for prediction in predictions:
         print >> f, '%s,%s' % (prediction[0],prediction[1])
-        ###### BEGIN REMOVE - ONLY USED FOR PLOTTING THE CHARTS #######
-        m.append(int(round(prediction[0],0)))
-        n.append(int(round(prediction[1],0)))
-
-pl.plot(m,n, 'r')
-
-filename = "actual/04.txt"
-linesOfFileA = open(filename, 'r').readlines()
-
-for line in linesOfFileA:
-    xValue, yValue = line.rstrip('\n').split(',')
-    mA.append([float(xValue)])
-    nA.append(float(yValue))
-
-pl.plot(mA,nA, 'g')
-pl.show() 
-###### END REMOVE - ONLY USED FOR PLOTTING THE CHARTS #######

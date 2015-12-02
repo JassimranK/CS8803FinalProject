@@ -1,9 +1,0 @@
-cycler==0.9.0
-filterpy==0.0.28
-matplotlib==1.5.0
-numpy==1.10.1
-pyparsing==2.0.5
-python-dateutil==2.4.2
-pytz==2015.7
-scipy==0.16.1
-six==1.10.0
