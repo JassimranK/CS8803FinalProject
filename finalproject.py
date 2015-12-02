@@ -155,4 +155,5 @@ print(kalman_filter(x, P))
 with open('prediction.txt', 'w') as f:
     print 'length of predictions', len(predictions)
     for prediction in predictions:
-        print >> f, '%s,%s' % (prediction[0],prediction[1])
+        print >> f, '%s,%s' %(int(round(prediction[0],0)),int(round(prediction[1],0)))
+        #print >> f, '%s,%s' % (prediction[0],prediction[1])
