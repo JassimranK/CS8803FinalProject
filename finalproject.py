@@ -149,11 +149,10 @@ for line in linesOfFile:
     measurements.append([float(xValue), float(yValue)])
     
 # call the KF
-print(kalman_filter(x, P))
+(kalman_filter(x, P))
 
 # write the predictions to a file
 with open('prediction.txt', 'w') as f:
-    print 'length of predictions', len(predictions)
     for prediction in predictions:
         print >> f, '%s,%s' %(int(round(prediction[0],0)),int(round(prediction[1],0)))
         #print >> f, '%s,%s' % (prediction[0],prediction[1])
