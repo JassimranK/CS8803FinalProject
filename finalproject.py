@@ -24,6 +24,11 @@ def collision_detection(x0, y0):
         retval = "LEFT"
     if x0 > 1696:
         retval = "RIGHT"
+
+    hit_obstacle = x0**2+y0**2-120**2
+    if hit_obstacle < 0:
+        return "OBSTACLE"
+
     return retval
         
 # ComputeAvgDistance is used to calculate the average distance between the set of measurments provided
@@ -89,6 +94,15 @@ def predict(P, x):
                 z = [measurement[0] + avgDist, measurement[1]]
             if collResult == "RIGHT":
                 z = [measurement[0] - avgDist, measurement[1]]
+            if collResult == "OBSTACLE":
+                # since the  obstacle is round, we aren't sure which direction it will go so we will just stop here.
+                x = matrix([[measurement[0]], [measurement[1]], [0.], [0.]])
+                P = matrix([[10., 0., 0., 0.], [0., 10., 0., 0.], [0., 0., 500., 0.], [0., 0., 0., 500.]])
+            #if collResult == "OBSTACLE":
+            #    # since the  obstacle is round, we aren't sure which direction it will go so we will just reverse the path.
+            #    previousMesaurmentIndex = measurements.index(measurement) - 1
+            #    # use the previous measuerment in order to reverse the direction of the robot
+            #    z = measurements[previousMesaurmentIndex]
 
         # incorporate the measurment into the KF
         P, x = measurement_update(P, x, z)
